@@ -1,0 +1,32 @@
+Author:			Roy Nelson
+Company Name:		HyPro Inc.
+
+Contact Information:	Roy Nelson
+			HyPro Inc.
+			600 S. Jefferson St.
+			Waterford, WI  53185
+			(262) 534-5141
+			royn@hypro.com
+
+Submission Name:	Roy Nelson
+Current Synergy/DE	Version 7.1.1
+Date Posted:		27-Jan-2000
+Platforms:		Windows NT
+
+Description:
+
+	The File calc_wk_no.dbl contains a function called calc_wk_no.
+This function will accept a calendar date as a parameter.  The function
+will calculate the week number that contains that date.  The function
+will return the 4-digit year associated with that week's Monday and the week
+number that was calculated.  In addition the function will adjust the date
+given to reflect the date associated with that week's Monday.  It may be
+tested by sending it a date of December 31, 1998.  1998 was a year that
+contained 53 weeks.
+
+Behavior of the Code:
+
+	Function will return a value of zero if no errors were found.
+The function will return a non zero value if either the date given
+is invalid or if the function did not receive a date in the proper
+parameter.

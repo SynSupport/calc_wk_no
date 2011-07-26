@@ -1,0 +1,145 @@
+.function calc_wk_no, ^VAL
+	a_date		,n
+	a_year		,n
+	a_week		,n
+
+record fmt_date
+	fmtyear		,d4
+	fmtmonth	,d2
+	fmtday		,d2
+
+.align
+record
+        jdate           ,i4
+	jfirst_thu	,i4
+	jmonday_wk1	,i4
+	jstart		,i4
+	day_number	,i4
+	error_status	,i4
+	pram_date	,d8
+	adj_pram_date	,d8
+	calc_date	,d8
+	week_no		,d2
+.proc
+
+	clear error_status
+	if (%passed(a_date))
+	    then
+		pram_date = a_date
+	    else
+		begin
+		error_status=TRUE
+		freturn error_status
+		end
+	;=============================================================
+        ; Get Day Number for Date Given
+	; %WKDAY returns day 1 for a Sunday.  In My application, day
+	; 1 is a Monday.  Need to adjust.
+	;=============================================================
+       	fmt_date = pram_date
+	;=============================================================
+	; If Date is Invalid, Trap the Error and setup to return
+	; an error status of 1.
+	;=============================================================
+	onerror ($ERR_INVDATE) bad_date
+        day_number = %wkday(pram_date)
+	if (day_number.eq.1)
+	    then
+		day_number = 7
+	    else
+		decr day_number
+	;=============================================================
+	; Convert to Julian Date
+	;=============================================================
+        jdate = %jperiod(pram_date)
+	;=============================================================
+	; If Date Given is not Monday, decr both day number
+	; and julian date to find date for Monday.
+	;=============================================================
+        if(day_number.gt.1)
+                do
+		    begin
+		    decr day_number
+		    decr jdate
+		    end
+		until (day_number.eq.1)
+	;=============================================================
+	; Convert back to Numeric and hold.  Will return at end
+	; of function.  Save Julian Date for use in calculating
+	; Week Number.
+	;=============================================================
+	xcall ndate(adj_pram_date,jdate)
+	jstart = jdate
+	;=============================================================
+	; now get Date for first Thursday of January
+	;=============================================================
+	call calculate_first_thursday
+	;=============================================================
+	; Get date for Monday of that Week
+	;=============================================================
+	jmonday_wk1 = jfirst_thu - 3
+	;=============================================================
+	; Calculate the Week Number
+	; Because Both Julian Dates are Mondays, the value in days will
+	; be a Multiple of 7.  Also, This will actually be Weeks completed.
+	; Will need to add one to get Current Week Number
+	;=============================================================
+	week_no = ((jstart - jmonday_wk1) / 7) + 1
+	;=============================================================
+	; Return New date adjusted to reflect The Monday that Starts
+	; the week that contains the date given.  Then Return values
+	; for Year and Week Number.
+	;=============================================================
+       	fmt_date = adj_pram_date
+	a_date = fmt_date
+	a_year = fmt_date.fmtyear
+	a_week = week_no
+	freturn error_status
+
+;-------------------------------------------------------------------------
+
+calculate_first_thursday,
+
+	;=============================================================
+	; This routine will return the date associated
+	; with the First Thursday in January
+	;=============================================================
+	fmt_date.fmtday = 1
+	fmt_date.fmtmonth = 1
+	calc_date = fmt_date
+	;=============================================================
+	; Get Day Number and Convert to Julian Date
+	;=============================================================
+        day_number = %wkday(calc_date)
+        jfirst_thu = %jperiod(calc_date)
+	;=============================================================
+	; Adjust to reflect Monday being Day #1
+	;=============================================================
+	if (day_number.eq.1)
+	    then
+		day_number = 7
+	    else
+		decr day_number
+	;=============================================================
+	; If day is Thursday, we're done!
+	;=============================================================
+	if (day_number.eq.4)
+	    return
+	;=============================================================
+	; Increment to find Date associated with next Thursday
+	;=============================================================
+        do
+	    begin
+	    incr day_number
+	    incr jfirst_thu
+	    if (day_number.eq.8)
+	       	day_number = 1
+	    end
+		until (day_number.eq.4)
+	return
+
+bad_date,
+	offerror
+	error_status = TRUE
+	return
+.end
